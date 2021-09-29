@@ -1,0 +1,54 @@
+version: 1.0.0
+title: What happens if we terminate an instance of the application? #MUST
+description: If an instance of the application is terminated, a new instance should be created #MUST - Be descriptive
+steady-state-hypothesis: #SHOULD - If steady state is not met, the experiment will bail out
+  title: Pod exists #MUST for SSH
+  probes: #MUST for SSH
+  - name: pod-exists
+    type: probe
+    tolerance: 1 #MUST for SSH - can be JSON, integer, boolean
+    provider:
+      type: python #Declares a python function to be applied.
+      func: count_pods #MUST for python provider
+      module: chaosk8s.pod.probes #MUST for python provider
+      arguments: #Arguments to pass to the python function
+        label_selector: app=chaos-demo
+        ns: chaos-demo
+  - name: pod-in-phase #MUST if probe is used
+    type: probe #Collects information from the system during the experiment #MUST if probe is used
+    tolerance: true
+    provider: #MUST if probe is used
+      type: python
+      func: pods_in_phase
+      module: chaosk8s.pod.probes
+      arguments:
+        label_selector: app=chaos-demo
+        ns: chaos-demo
+        phase: Running
+  - name: pod-in-conditions
+    type: probe
+    tolerance: true
+    provider:
+      type: python
+      func: pods_in_conditions
+      module: chaosk8s.pod.probes
+      arguments:
+        label_selector: app=chaos-demo
+        ns: chaos-demo
+        conditions:
+          - type: Ready
+            status: "True"
+method: #MUST
+- type: action #Can be either a probe or an action
+  name: terminate-pod
+  provider:
+    type: python
+    module: chaosk8s.pod.actions
+    func: terminate_pods
+    arguments:
+      label_selector: app=chaos-demo
+      rand: true
+      ns: chaos-demo
+  pauses: 
+    after: 50 #Indicates the number of seconds to wait before continuing.
+rollback: {} #Will attempt to put the system back to its initial state_

@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:latest
+          image: 049780446181.dkr.ecr.ap-south-1.amazonaws.com/spark:nginx-test
           imagePullPolicy: Always
           ports:
             - containerPort: 80
